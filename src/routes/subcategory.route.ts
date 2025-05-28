@@ -5,7 +5,7 @@ import {
   getAllSubCategories,
   getAllSubCategoryById,
   updateSubCategory,
-} from "../controller/subcategory.controller";
+} from "../controllers/subcategory.controller";
 import { schemaValidate } from "../middlewares/schemaValidate";
 import { subCategoryValidation } from "../validations/category.validation";
 

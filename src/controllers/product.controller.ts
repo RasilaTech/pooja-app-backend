@@ -7,6 +7,7 @@ import { Category } from "../models/category.model";
 import { HTTP_STATUS_CODES } from "../constants/httpsStatusCodes";
 import { MESSAGES } from "../constants/messages";
 import { calculatePagination } from "../utils/pagination";
+import { db } from "../models"; // adjust to your setup
 
 export async function getAllProducts(req: Request, res: Response) {
   try {
@@ -180,14 +181,46 @@ export async function createProduct(req: Request, res: Response) {
         product_id: product.dataValues.id,
       })
     );
-    await ProductVariant.bulkCreate(variantsWithProductId);
+    const createdVariants = await ProductVariant.bulkCreate(
+      variantsWithProductId,
+      {
+        returning: true,
+      }
+    );
+
+    // Insert category associations
+    const joinTableRows: { product_variant_id: string; category_id: string }[] =
+      [];
+
+    createdVariants.forEach((variant, index) => {
+      const { category_ids = [], sub_category_ids = [] } =
+        product_variants[index];
+      [...category_ids, ...sub_category_ids].forEach((catId: string) => {
+        joinTableRows.push({
+          product_variant_id: variant.id,
+          category_id: catId,
+        });
+      });
+    });
+
+    if (joinTableRows.length > 0) {
+      await db.sequelize.getQueryInterface().bulkInsert(
+        "product_variant_categories",
+        joinTableRows.map((row) => ({
+          product_variant_id: row.product_variant_id,
+          category_id: row.category_id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        }))
+      );
+    }
 
     // await Promise.all(
     //   product_variants.map(async (variant: any) => {
     //     console.log(product_variants);
     //   })
     // );
-    
+
     res.status(HTTP_STATUS_CODES.OK).json({
       status: HTTP_STATUS_CODES.OK,
       message: MESSAGES.SUCCESS.CREATE_PRODUCTS,

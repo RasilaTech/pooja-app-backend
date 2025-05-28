@@ -5,7 +5,7 @@ import {
   getAllCategories,
   getAllCategoryById,
   updateCategory,
-} from "../controller/category.controller";
+} from "../controllers/category.controller";
 import { schemaValidate } from "../middlewares/schemaValidate";
 import { categoryValidation } from "../validations/category.validation";
 
